@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.cardview.widget.CardView
@@ -13,12 +14,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lucas.mygameapp.R
 import com.lucas.mygameapp.model.UserGame
 
+private const val VIEW_TYPE_ITEM = 0
+private const val VIEW_TYPE_LOADING = 1
+
 class ListGameAdapter (private val games: MutableList<UserGame>,
                        private val itemLayoutId: Int,
                        private val launcher : ActivityResultLauncher<Array<Pair<String, Int>>>,
                        private val viewAll : Boolean,
                        private val gameClickedFunction : (Int, UserGame) -> Unit)
-    : RecyclerView.Adapter<ListGameAdapter.ViewHolder>(){
+    : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
 
     private var context : Context? = null
     private var density : Float? = null
@@ -37,54 +41,76 @@ class ListGameAdapter (private val games: MutableList<UserGame>,
         }
     }
 
+    class LoadingViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val progressBar : ProgressBar
+
+        init {
+            progressBar = view.findViewById(R.id.pbLoading)
+        }
+    }
+
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
         context = recyclerView.context
         density = recyclerView.context.resources.displayMetrics.density
     }
 
-    override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(viewGroup.context).inflate(itemLayoutId, viewGroup, false)
-
-        return ViewHolder(view)
+    override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        if (viewType == VIEW_TYPE_ITEM) {
+            val view = LayoutInflater.from(viewGroup.context).inflate(itemLayoutId, viewGroup, false)
+            return ViewHolder(view)
+        } else {
+            val view = LayoutInflater.from(viewGroup.context)
+                .inflate(R.layout.item_loading, viewGroup, false)
+            return LoadingViewHolder(view)
+        }
     }
 
-    override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
+    override fun getItemViewType(position: Int): Int {
+        return if (games[position].gameId == null) VIEW_TYPE_LOADING else VIEW_TYPE_ITEM
+    }
 
-        if (!viewAll && position + 1 == games.size) {
-            val paddingRight = 10
+    override fun onBindViewHolder(viewHolder: RecyclerView.ViewHolder, position: Int) {
 
-            val param = viewHolder.cardView.layoutParams as ViewGroup.MarginLayoutParams
-            param.marginEnd = (density!! * paddingRight).toInt()
-            viewHolder.cardView.layoutParams = param
-        }
+        if (viewHolder is ViewHolder) {
 
-        if (games[position].game?.coverBitmap != null) {
-            viewHolder.imageHolder.setImageBitmap(games[position].game?.coverBitmap!!)
-        }
+            if (!viewAll && position + 1 == games.size) {
+                val paddingRight = 10
 
-        viewHolder.platform.text = if (games[position].platform == "Genesis/MegaDrive") "MegaDrive" else games[position].platform
-        viewHolder.platform.visibility = if (games[position].platform != null) View.VISIBLE else View.GONE
+                val param = viewHolder.cardView.layoutParams as ViewGroup.MarginLayoutParams
+                param.marginEnd = (density!! * paddingRight).toInt()
+                viewHolder.cardView.layoutParams = param
+            }
 
-        if (games[position].rating != null) {
-            val intRating = games[position].rating!!.toInt()
+            if (games[position].game?.coverBitmap != null) {
+                viewHolder.imageHolder.setImageBitmap(games[position].game?.coverBitmap!!)
+            }
 
-            viewHolder.rating.text = if (games[position].rating!! - intRating == 0f) intRating.toString() else games[position].rating?.toString()
-            viewHolder.rating.visibility = View.VISIBLE
-        }
-        else {
-            viewHolder.rating.visibility = View.GONE
-        }
+            viewHolder.platform.text =
+                if (games[position].platform == "Genesis/MegaDrive") "MegaDrive" else games[position].platform
+            viewHolder.platform.visibility =
+                if (games[position].platform != null) View.VISIBLE else View.GONE
 
-        viewHolder.imageHolder.setOnClickListener {
-            gameClickedFunction(viewHolder.adapterPosition, games[viewHolder.adapterPosition])
+            if (games[position].rating != null) {
+                val intRating = games[position].rating!!.toInt()
 
-            val inputs = arrayOf(
-                Pair("gameId", games[position].gameId ?: 0),
-                Pair("userGameId", games[position].id ?: 0)
-            )
+                viewHolder.rating.text =
+                    if (games[position].rating!! - intRating == 0f) intRating.toString() else games[position].rating?.toString()
+                viewHolder.rating.visibility = View.VISIBLE
+            } else {
+                viewHolder.rating.visibility = View.GONE
+            }
 
-            launcher.launch(inputs)
+            viewHolder.imageHolder.setOnClickListener {
+                gameClickedFunction(viewHolder.adapterPosition, games[viewHolder.adapterPosition])
+
+                val inputs = arrayOf(
+                    Pair("gameId", games[position].gameId ?: 0),
+                    Pair("userGameId", games[position].id ?: 0)
+                )
+
+                launcher.launch(inputs)
+            }
         }
     }
 

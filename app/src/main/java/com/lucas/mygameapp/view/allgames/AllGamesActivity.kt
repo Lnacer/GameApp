@@ -2,6 +2,8 @@ package com.lucas.mygameapp.view.allgames
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.transition.Visibility
+import android.view.View
 import androidx.core.view.children
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.GridLayoutManager
@@ -10,6 +12,7 @@ import com.lucas.mygameapp.view.adapter.ListGameAdapter
 import com.lucas.mygameapp.R
 import com.lucas.mygameapp.database.Database
 import com.lucas.mygameapp.databinding.ActivityAllGamesBinding
+import com.lucas.mygameapp.model.Game
 import com.lucas.mygameapp.model.GameStatus
 import com.lucas.mygameapp.model.Platform
 import com.lucas.mygameapp.model.UserGame
@@ -17,6 +20,7 @@ import com.lucas.mygameapp.view.allgames.bottomsheet.SearchGamesBottomSheet
 import com.lucas.mygameapp.view.gamedetail.GameDetailActivityContract
 import com.lucas.mygameapp.view.searchgame.bottomsheet.SearchFilterBottomSheet
 import kotlin.concurrent.thread
+import kotlin.math.ceil
 
 class AllGamesActivity : AppCompatActivity() {
 
@@ -28,6 +32,7 @@ class AllGamesActivity : AppCompatActivity() {
     private var gameModified : Pair<Int, UserGame>? = null
     private var status : GameStatus? = null
     private var listGameAdapter : ListGameAdapter? = null
+    private var sizeGames = 0
 
     private val launcher = registerForActivityResult(GameDetailActivityContract()) {
         if (it != null && it.status != gameModified?.second?.status) {
@@ -58,21 +63,23 @@ class AllGamesActivity : AppCompatActivity() {
         updateNavigationBarHeight()
 
         thread {
-            val count = UserGameIntegration.getCounts(status!!)[status?.printableName!!] ?: 0
+            sizeGames = UserGameIntegration.getCounts(status!!)[status?.printableName!!] ?: 0
             userGames.addAll(UserGameIntegration.getUserGameByStatus(status!!, 0))
             userGamesFiltered.addAll(userGames.toList())
 
             runOnUiThread {
 
-                getGamesOnBackground(count)
+                getGamesOnBackground()
 
                 listGameAdapter = ListGameAdapter(userGamesFiltered, R.layout.game_grid_item, launcher, true, ::notifyGameDetailCalled)
 
                 binding.rvAllGames.layoutManager = GridLayoutManager(applicationContext, 2)
                 binding.rvAllGames.adapter = listGameAdapter
-                updateGamesCount(count)
+                updateGamesCount(sizeGames)
 
                 filterBottomSheet = SearchGamesBottomSheet(this, userGamesFiltered, ::onFilterApplied)
+
+                binding.pbLoading.visibility = View.INVISIBLE
 
                 binding.btnSearchFilter.setOnClickListener {
                     filterBottomSheet.show()
@@ -81,18 +88,34 @@ class AllGamesActivity : AppCompatActivity() {
         }
     }
 
-    private fun getGamesOnBackground(count : Int) {
+    private fun getGamesOnBackground() {
 
-        val size = 20
-        for (i in 0..count) {
-            thread {
-                val games = UserGameIntegration.getUserGameByStatus(status!!, size * i)
-                userGames.addAll(games)
-                userGamesFiltered = userGames.toMutableList()
+        if ((sizeGames - userGames.size) <= 0) {
+            return
+        }
 
-                runOnUiThread {
-                    binding.rvAllGames.adapter?.notifyItemRangeInserted((userGames.size - size), size)
+        userGamesFiltered.add(UserGame(null))
+
+        thread {
+            val games = UserGameIntegration.getUserGameByStatus(status!!, userGames.size)
+
+            var removeLast : Int? = null
+            if (userGamesFiltered.last().gameId == null) {
+                removeLast = userGamesFiltered.size - 1
+                userGamesFiltered.removeLast()
+            }
+
+            userGamesFiltered.addAll(games.toList())
+
+            runOnUiThread {
+                if (removeLast != null) {
+                    binding.rvAllGames.adapter?.notifyItemRemoved(removeLast)
                 }
+                binding.rvAllGames.adapter?.notifyItemRangeInserted(userGames.size, userGamesFiltered.size)
+
+                userGames.addAll(games)
+
+                getGamesOnBackground()
             }
         }
     }
