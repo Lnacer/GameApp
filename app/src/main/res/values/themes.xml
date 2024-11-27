@@ -1,0 +1,25 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Base.Theme.MyGameApp" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+    </style>
+
+    <style name="Base.Theme.MyGameApp.LightStatusBar" parent="@style/Base.Theme.MyGameApp">
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="Theme.MyGameApp" parent="Base.Theme.MyGameApp" />
+
+    <style name="BottomSheetAnimation">
+        <item name="android:windowEnterAnimation">@anim/slide_botton_in</item>
+        <item name="android:windowExitAnimation">@anim/slide_bottom_out</item>
+    </style>
+    <style name="splashScreen" parent="Theme.MyGameApp">
+        <item name="android:windowBackground">@drawable/splash_screen</item>
+    </style>
+</resources>

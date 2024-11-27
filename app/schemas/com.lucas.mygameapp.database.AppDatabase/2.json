@@ -1,0 +1,236 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "59b3e84e4dd0db645ad3546bf1b3fea5",
+    "entities": [
+      {
+        "tableName": "Game",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`name` TEXT NOT NULL, `game_id` INTEGER NOT NULL, `cover_image` BLOB, `game_summary` TEXT, `game_release_date` INTEGER, `game_publishers` TEXT NOT NULL, `game_developers` TEXT NOT NULL, `game_genres` TEXT NOT NULL, `game_platforms` TEXT NOT NULL, PRIMARY KEY(`game_id`))",
+        "fields": [
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "game_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "_coverBlob",
+            "columnName": "cover_image",
+            "affinity": "BLOB",
+            "notNull": false
+          },
+          {
+            "fieldPath": "summary",
+            "columnName": "game_summary",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "releaseDate",
+            "columnName": "game_release_date",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "publishers",
+            "columnName": "game_publishers",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "developers",
+            "columnName": "game_developers",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "genres",
+            "columnName": "game_genres",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "platforms",
+            "columnName": "game_platforms",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "game_id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "UserGame",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`usergame_id` INTEGER PRIMARY KEY AUTOINCREMENT, `game_status` TEXT, `user_game_start_play_on` INTEGER, `user_game_stop_play_on` INTEGER, `user_game_play_time` INTEGER, `user_game_progress` INTEGER, `user_game_platform` TEXT, `user_game_rating` REAL, `name` TEXT, `game_id` INTEGER, `cover_image` BLOB, `game_summary` TEXT, `game_release_date` INTEGER, `game_publishers` TEXT, `game_developers` TEXT, `game_genres` TEXT, `game_platforms` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "usergame_id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "game_status",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "startPlayingOn",
+            "columnName": "user_game_start_play_on",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "stopPlayingOn",
+            "columnName": "user_game_stop_play_on",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "playingTime",
+            "columnName": "user_game_play_time",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "progress",
+            "columnName": "user_game_progress",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "platform",
+            "columnName": "user_game_platform",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "rating",
+            "columnName": "user_game_rating",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "game.name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "game.id",
+            "columnName": "game_id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "game._coverBlob",
+            "columnName": "cover_image",
+            "affinity": "BLOB",
+            "notNull": false
+          },
+          {
+            "fieldPath": "game.summary",
+            "columnName": "game_summary",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "game.releaseDate",
+            "columnName": "game_release_date",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "game.publishers",
+            "columnName": "game_publishers",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "game.developers",
+            "columnName": "game_developers",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "game.genres",
+            "columnName": "game_genres",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "game.platforms",
+            "columnName": "game_platforms",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "usergame_id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "User",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_name` TEXT NOT NULL, `user_id` INTEGER NOT NULL, `user_access_token` TEXT, `user_picture` BLOB, PRIMARY KEY(`user_id`))",
+        "fields": [
+          {
+            "fieldPath": "name",
+            "columnName": "user_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "user_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accessToken",
+            "columnName": "user_access_token",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "picture",
+            "columnName": "user_picture",
+            "affinity": "BLOB",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "user_id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '59b3e84e4dd0db645ad3546bf1b3fea5')"
+    ]
+  }
+}

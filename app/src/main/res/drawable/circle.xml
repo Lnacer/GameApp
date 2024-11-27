@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/circuloInterno"
+        android:left="4dip"
+        android:right="4dip"
+        android:bottom="4dip"
+        android:top="4dip">
+        <shape xmlns:android="http://schemas.android.com/apk/res/android"
+            android:shape="oval">
+            <solid
+                android:width="1dip"
+                android:color="@color/black" />
+        </shape>
+    </item>
+    <item android:id="@+id/circuloExterno"
+        android:bottom="1dip"
+        android:left="1dip"
+        android:right="1dip"
+        android:top="1dip">
+        <shape xmlns:android="http://schemas.android.com/apk/res/android"
+            android:shape="oval">
+            <stroke
+                android:width="1dip"
+                android:color="@color/black" />
+        </shape>
+    </item>
+</layer-list>
