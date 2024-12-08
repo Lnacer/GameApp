@@ -14,6 +14,7 @@ import com.lucas.mygameapp.database.Database
 import com.lucas.mygameapp.databinding.ActivitySplashScreenBinding
 import com.lucas.mygameapp.model.Game
 import com.lucas.mygameapp.model.User
+import com.lucas.mygameapp.model.UserGame
 import kotlin.concurrent.thread
 
 class SplashScreenActivity : AppCompatActivity() {
@@ -32,24 +33,6 @@ class SplashScreenActivity : AppCompatActivity() {
             val email = "lfabossa@hotmail.com"
 
             val createdUser = UserIntegratiom.getUser(email)
-
-/*
-            val database = Database.getInstance(applicationContext)
-
-            val game = UserGameIntegration.getAll()
-
-
-            var ids = ""
-            for (g in game) {
-
-                ids += g.gameId.toString() + ","
-            }
-*/
-
-            /*val games = database.userGameDao().getAll()
-
-
-            UserGameIntegration.insertUserGames(games)*/
 
             runOnUiThread {
                 MainActivity.loggedUser = createdUser

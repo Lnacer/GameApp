@@ -5,8 +5,10 @@ import com.google.gson.GsonBuilder
 import com.lucas.mygameapp.VO.GameSupabaseVO
 import com.lucas.mygameapp.VO.GameVO
 import com.lucas.mygameapp.VO.PlatformVO
+import com.lucas.mygameapp.VO.UserGameSupabaseVO
 import com.lucas.mygameapp.model.Game
 import com.lucas.mygameapp.model.Platform
+import com.lucas.mygameapp.model.UserGame
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
@@ -84,7 +86,7 @@ class GameIntegration  : SupabaseIntegration() {
             httpURLConnection.setRequestProperty("apikey", ANON_KEY)
             httpURLConnection.setRequestProperty("Content-Type", "application/json")
 
-            val json = GsonBuilder().serializeNulls().create().toJson(gameVO)
+            val json = GsonBuilder().create().toJson(gameVO)
 
             val outputStreamWriter = OutputStreamWriter(httpURLConnection.outputStream)
             outputStreamWriter.write(json)
@@ -98,14 +100,41 @@ class GameIntegration  : SupabaseIntegration() {
             }
         }
 
+        fun getAll() : List<Game> {
+            val url = URL("$BASE_URL/${TABLE}?select=id&order=created_date.desc")
+
+            val httpURLConnection = url.openConnection() as HttpURLConnection
+            httpURLConnection.requestMethod = "GET"
+            httpURLConnection.setRequestProperty("apikey", ANON_KEY)
+
+            val responseCode = httpURLConnection.responseCode
+
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+
+                val inputStreamReader = InputStreamReader(httpURLConnection.inputStream, "UTF-8")
+
+                val response = Gson().fromJson(inputStreamReader, Array<GameSupabaseVO>::class.java)
+
+                val games = mutableListOf<Game>()
+
+                for (gameVO in response) {
+                    games.add(convertVoToEntity(gameVO))
+                }
+
+                return games.toList()
+            }
+
+            throw Exception("Failed to get access to the server")
+        }
+
         internal fun convertVoToEntity(vo : GameSupabaseVO) : Game {
             val game = Game(vo.name!!, vo.id!!)
 
             game.platforms = vo.platforms
             game.genres = vo.genres
             game.summary = vo.summary
-            game.developers = vo.involved_companies.filter { it.developer }.map { it.company.name!! }
-            game.publishers = vo.involved_companies.filter { it.publisher }.map { it.company.name!! }
+            game.developers = vo.developers
+            game.publishers = vo.publishers
             game.coverUrl = vo.cover_url
             game.releaseDate = vo.first_release_date
 
@@ -125,6 +154,8 @@ class GameIntegration  : SupabaseIntegration() {
             gameVO.cover_url = game.coverUrl
             gameVO.first_release_date = game.releaseDate
             gameVO.summary = game.summary
+            gameVO.developers = game.developers
+            gameVO.publishers = game.publishers
 
             if (game.coverBlob != null) {
                 gameVO.cover_blob = Base64.getEncoder().encodeToString(game.coverBlob)

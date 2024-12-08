@@ -6,14 +6,15 @@ import com.google.gson.reflect.TypeToken
 import com.lucas.mygameapp.VO.UserGameAggregateCountVO
 import com.lucas.mygameapp.VO.UserGameSupabaseVO
 import com.lucas.mygameapp.VO.UserGameVO
-import com.lucas.mygameapp.model.Game
 import com.lucas.mygameapp.model.GameStatus
 import com.lucas.mygameapp.model.UserGame
+import java.io.BufferedReader
+import java.io.IOException
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.Date
+
 
 class UserGameIntegration : SupabaseIntegration() {
 
@@ -185,14 +186,14 @@ class UserGameIntegration : SupabaseIntegration() {
 
             val userGameVO = convertUserGameToUserGameVo(userGame)
 
-            var endpoint = "$BASE_URL/$TABLE"
+            var endpoint = "$BASE_URL/$TABLE?select=id"
             var method = "POST"
 
             var json = GsonBuilder().create().toJson(userGameVO)
 
             if (userGame.id != null) {
                 method = "PATCH"
-                endpoint += "?id=eq.${userGame.id}"
+                endpoint += "&id=eq.${userGame.id}"
                 json = GsonBuilder().serializeNulls().create().toJson(userGameVO)
             }
 
@@ -203,6 +204,7 @@ class UserGameIntegration : SupabaseIntegration() {
             httpURLConnection.doOutput = true
             httpURLConnection.setRequestProperty("apikey", ANON_KEY)
             httpURLConnection.setRequestProperty("Content-Type", "application/json")
+            httpURLConnection.setRequestProperty("Prefer", "return=representation")
 
             val outputStreamWriter = OutputStreamWriter(httpURLConnection.outputStream)
             outputStreamWriter.write(json)
@@ -211,7 +213,16 @@ class UserGameIntegration : SupabaseIntegration() {
 
             val responseCode = httpURLConnection.responseCode
 
-            if (responseCode != HttpURLConnection.HTTP_CREATED && responseCode != HttpURLConnection.HTTP_NO_CONTENT) {
+            if (responseCode == HttpURLConnection.HTTP_CREATED || responseCode == HttpURLConnection.HTTP_OK) {
+                val inputStreamReader = InputStreamReader(httpURLConnection.inputStream, "UTF-8")
+
+                val response = Gson().fromJson(inputStreamReader, Array<UserGameSupabaseVO>::class.java)
+
+                if (response.isNotEmpty() && userGame.id == null) {
+                    userGame.id = response[0].id
+                }
+            }
+            else{
                 throw Exception("Failed to create the user")
             }
         }
@@ -245,6 +256,39 @@ class UserGameIntegration : SupabaseIntegration() {
 
             val endpoint = "$BASE_URL/$TABLE"
             val method = "POST"
+
+            val url = URL(endpoint)
+
+            val httpURLConnection = url.openConnection() as HttpURLConnection
+            httpURLConnection.requestMethod = method
+            httpURLConnection.doOutput = true
+            httpURLConnection.setRequestProperty("apikey", ANON_KEY)
+            httpURLConnection.setRequestProperty("Content-Type", "application/json")
+
+            val json = GsonBuilder().serializeNulls().create().toJson(userGamesVO)
+
+            val outputStreamWriter = OutputStreamWriter(httpURLConnection.outputStream)
+            outputStreamWriter.write(json)
+            outputStreamWriter.flush()
+            outputStreamWriter.close()
+
+            val responseCode = httpURLConnection.responseCode
+
+            if (responseCode != HttpURLConnection.HTTP_CREATED) {
+                throw Exception("Failed to create the user")
+            }
+        }
+
+        fun updateUserGames(userGames : List<UserGame>) {
+
+            val userGamesVO = mutableListOf<UserGameVO>()
+
+            for (userGame in userGames) {
+                userGamesVO.add(convertUserGameToUserGameVo(userGame))
+            }
+
+            val endpoint = "$BASE_URL/$TABLE"
+            val method = "PATCH"
 
             val url = URL(endpoint)
 

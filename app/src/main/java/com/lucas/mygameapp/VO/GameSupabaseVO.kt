@@ -9,7 +9,8 @@ class GameSupabaseVO {
     var genres : List<String> = emptyList()
     var platforms : List<String> = emptyList()
     var summary : String? = null
-    var involved_companies : List<CompanyVO> = emptyList()
+    var publishers : List<String> = emptyList()
+    var developers : List<String> = emptyList()
     var cover_url : String? = null
     var cover_blob : String? = null
 }
