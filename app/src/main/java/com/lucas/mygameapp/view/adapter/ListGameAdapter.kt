@@ -15,13 +15,13 @@ import com.lucas.mygameapp.R
 import com.lucas.mygameapp.model.UserGame
 
 private const val VIEW_TYPE_ITEM = 0
-private const val VIEW_TYPE_LOADING = 1
 
 class ListGameAdapter (private val games: MutableList<UserGame>,
                        private val itemLayoutId: Int,
                        private val launcher : ActivityResultLauncher<Array<Pair<String, Int>>>,
                        private val viewAll : Boolean,
-                       private val gameClickedFunction : (Int, UserGame) -> Unit)
+                       private val gameClickedFunction : (Int, UserGame) -> Unit,
+                       private val checkLoadingFunction : (() -> Unit)? = null)
     : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
 
     private var context : Context? = null
@@ -41,14 +41,6 @@ class ListGameAdapter (private val games: MutableList<UserGame>,
         }
     }
 
-    class LoadingViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val progressBar : ProgressBar
-
-        init {
-            progressBar = view.findViewById(R.id.pbLoading)
-        }
-    }
-
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
         context = recyclerView.context
@@ -56,18 +48,15 @@ class ListGameAdapter (private val games: MutableList<UserGame>,
     }
 
     override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        if (viewType == VIEW_TYPE_ITEM) {
-            val view = LayoutInflater.from(viewGroup.context).inflate(itemLayoutId, viewGroup, false)
-            return ViewHolder(view)
-        } else {
-            val view = LayoutInflater.from(viewGroup.context)
-                .inflate(R.layout.item_loading, viewGroup, false)
-            return LoadingViewHolder(view)
-        }
+        val view = LayoutInflater.from(viewGroup.context).inflate(itemLayoutId, viewGroup, false)
+        return ViewHolder(view)
     }
 
     override fun getItemViewType(position: Int): Int {
-        return if (games[position].gameId == null) VIEW_TYPE_LOADING else VIEW_TYPE_ITEM
+        if (checkLoadingFunction != null && position == (games.size - 1)) {
+            checkLoadingFunction.invoke()
+        }
+        return VIEW_TYPE_ITEM
     }
 
     override fun onBindViewHolder(viewHolder: RecyclerView.ViewHolder, position: Int) {

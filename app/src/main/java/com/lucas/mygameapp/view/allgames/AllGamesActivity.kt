@@ -33,6 +33,7 @@ class AllGamesActivity : AppCompatActivity() {
     private var status : GameStatus? = null
     private var listGameAdapter : ListGameAdapter? = null
     private var sizeGames = 0
+    private var loadedAll = false
 
     private val launcher = registerForActivityResult(GameDetailActivityContract()) {
         if (it != null && it.status != gameModified?.second?.status) {
@@ -71,7 +72,7 @@ class AllGamesActivity : AppCompatActivity() {
 
                 getGamesOnBackground()
 
-                listGameAdapter = ListGameAdapter(userGamesFiltered, R.layout.game_grid_item, launcher, true, ::notifyGameDetailCalled)
+                listGameAdapter = ListGameAdapter(userGamesFiltered, R.layout.game_grid_item, launcher, true, ::notifyGameDetailCalled, ::checkLoadingFunction,)
 
                 binding.rvAllGames.layoutManager = GridLayoutManager(applicationContext, 2)
                 binding.rvAllGames.adapter = listGameAdapter
@@ -79,7 +80,7 @@ class AllGamesActivity : AppCompatActivity() {
 
                 filterBottomSheet = SearchGamesBottomSheet(this, userGamesFiltered, ::onFilterApplied)
 
-                binding.pbLoading.visibility = View.INVISIBLE
+                binding.pbLoadingMiddle.visibility = View.INVISIBLE
 
                 binding.btnSearchFilter.setOnClickListener {
                     filterBottomSheet.show()
@@ -94,29 +95,29 @@ class AllGamesActivity : AppCompatActivity() {
             return
         }
 
-        userGamesFiltered.add(UserGame(null))
-
         thread {
             val games = UserGameIntegration.getUserGameByStatus(status!!, userGames.size)
-
-            var removeLast : Int? = null
-            if (userGamesFiltered.last().gameId == null) {
-                removeLast = userGamesFiltered.size - 1
-                userGamesFiltered.removeLast()
-            }
 
             userGamesFiltered.addAll(games.toList())
 
             runOnUiThread {
-                if (removeLast != null) {
-                    binding.rvAllGames.adapter?.notifyItemRemoved(removeLast)
-                }
+
                 binding.rvAllGames.adapter?.notifyItemRangeInserted(userGames.size, userGamesFiltered.size)
 
                 userGames.addAll(games)
 
+                binding.pbLoadingBottom.visibility = View.GONE
+
+                loadedAll = userGames.size == sizeGames
+
                 getGamesOnBackground()
             }
+        }
+    }
+
+    private fun checkLoadingFunction() {
+        if (!loadedAll) {
+            binding.pbLoadingBottom.visibility = View.VISIBLE
         }
     }
 
@@ -130,7 +131,7 @@ class AllGamesActivity : AppCompatActivity() {
         val statusBarHeight = resources.getDimensionPixelSize(statusBarSize)
 
         if (statusBarHeight > 0) {
-            binding.llAllGamesRoot.updatePadding(top = statusBarHeight)
+            binding.rootView.updatePadding(top = statusBarHeight)
         }
     }
 
