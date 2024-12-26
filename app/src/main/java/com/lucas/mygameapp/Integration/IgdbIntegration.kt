@@ -1,15 +1,10 @@
 package com.lucas.mygameapp.Integration
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import androidx.room.util.joinIntoString
 import com.google.gson.Gson
-import com.google.gson.internal.LinkedTreeMap
 import com.lucas.mygameapp.Integration.Supabase.UserIntegratiom
 import com.lucas.mygameapp.VO.GameVO
-import com.lucas.mygameapp.VO.ScreenshotVO
-import com.lucas.mygameapp.database.Database
 import com.lucas.mygameapp.model.Game
 import com.lucas.mygameapp.model.Platform
 import com.lucas.mygameapp.model.User
@@ -19,7 +14,6 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
-import java.util.Arrays
 import java.util.Date
 
 private const val CLIENT_ID = "5uqgz9o8v8ccekz3z4w46s2jw23th8"
@@ -104,16 +98,20 @@ open class IgdbIntegration {
         @JvmStatic
         protected fun getIgdbResponse(httpURLConnection : HttpURLConnection, postData: ByteArray, connectedUser: User) : InputStreamReader {
 
-            var userToken = connectedUser.accessToken ?: getRefreshedToken(connectedUser)
+            connectedUser.accessToken = connectedUser.accessToken ?: getRefreshedToken(connectedUser)
 
             try {
-                return getIgdbResponse(httpURLConnection, postData, userToken)
+                return getIgdbResponse(httpURLConnection, postData, connectedUser.accessToken!!)
             }
             catch (ex : Exception) {
                 if (ex.message == "Invalid Token") {
-                    userToken = connectedUser.accessToken ?: getRefreshedToken(connectedUser)
+                    connectedUser.accessToken = getRefreshedToken(connectedUser)
 
-                    return getIgdbResponse(httpURLConnection, postData, userToken)
+                    val newHttpURLConnection = (httpURLConnection.url.openConnection() as HttpURLConnection)
+                    newHttpURLConnection.requestMethod = httpURLConnection.requestMethod
+                    newHttpURLConnection.doOutput = httpURLConnection.doOutput
+
+                    return getIgdbResponse(newHttpURLConnection, postData, connectedUser.accessToken!!)
                 }
 
                 throw ex

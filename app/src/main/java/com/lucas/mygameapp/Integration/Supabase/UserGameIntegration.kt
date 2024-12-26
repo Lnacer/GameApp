@@ -1,19 +1,20 @@
 package com.lucas.mygameapp.Integration.Supabase
 
+import androidx.room.Query
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.google.gson.reflect.TypeToken
 import com.lucas.mygameapp.VO.UserGameAggregateCountVO
+import com.lucas.mygameapp.VO.UserGameAggregateYearCountVO
 import com.lucas.mygameapp.VO.UserGameSupabaseVO
 import com.lucas.mygameapp.VO.UserGameVO
 import com.lucas.mygameapp.model.GameStatus
 import com.lucas.mygameapp.model.UserGame
-import java.io.BufferedReader
-import java.io.IOException
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import java.time.ZoneId
+import java.util.Date
 
 
 class UserGameIntegration : SupabaseIntegration() {
@@ -155,8 +156,82 @@ class UserGameIntegration : SupabaseIntegration() {
             throw Exception("Failed to get access to the server")
         }
 
-        fun getUserGameByStatus(status: GameStatus, offset : Int) : List<UserGame> {
-            val url = URL("$BASE_URL/$TABLE?status=eq.${status.printableName}&select=id,game_id,status,platform,rating,game(id,name,cover_blob)&order=created_date.desc&limit=20&offset=$offset")
+        fun getUserGameByStatus(status: GameStatus, offset: Int, orderBy : String? = null) : List<UserGame> {
+
+            var queryOrder = ""
+
+            if (orderBy == null) {
+                queryOrder = "created_date.desc"
+            }
+            else if (!queryOrder.contains("created_date")) {
+                queryOrder = orderBy
+                queryOrder += ",created_date.desc.nullslast"
+            }
+
+            val url = URL("$BASE_URL/$TABLE?status=eq.${status.printableName}&select=id,game_id,status,platform,rating,game(id,name,cover_blob)&order=${queryOrder}&limit=20&offset=$offset")
+
+            val httpURLConnection = url.openConnection() as HttpURLConnection
+            httpURLConnection.requestMethod = "GET"
+            httpURLConnection.setRequestProperty("apikey", ANON_KEY)
+
+            val responseCode = httpURLConnection.responseCode
+
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+
+                val inputStreamReader = InputStreamReader(httpURLConnection.inputStream, "UTF-8")
+
+                val response = Gson().fromJson(inputStreamReader, Array<UserGameSupabaseVO>::class.java)
+
+                val userGames = mutableListOf<UserGame>()
+
+                for (userGameVO in response) {
+                    userGames.add(convertVoToEntity(userGameVO))
+                }
+
+                return userGames.toList()
+            }
+
+            throw Exception("Failed to get access to the server")
+        }
+
+        fun getTimelineGamesCount(status : GameStatus) : List<UserGameAggregateYearCountVO> {
+
+            val yearField = if (status == GameStatus.FINISHED) "stop_playing_year" else "start_playing_year"
+
+            val endpoint = "$BASE_URL/$TABLE?select=year:${yearField},count()&${yearField}=not.is.null&order=${yearField}.desc"
+
+            val url = URL(endpoint)
+
+            val httpURLConnection = url.openConnection() as HttpURLConnection
+            httpURLConnection.requestMethod = "GET"
+            httpURLConnection.setRequestProperty("apikey", ANON_KEY)
+
+            val responseCode = httpURLConnection.responseCode
+
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+
+                val inputStreamReader = InputStreamReader(httpURLConnection.inputStream, "UTF-8")
+
+                val response = Gson().fromJson(inputStreamReader, Array<UserGameAggregateYearCountVO>::class.java)
+
+                return response.toList()
+            }
+
+            throw Exception("Failed to get access to the server")
+        }
+
+        fun getTimelineGames(year : Int, orderByStartedDate : Boolean) : List<UserGame> {
+
+            var orderBy = "start_playing.desc"
+            var whereClause = "start_playing_year=eq.${year}"
+            if (!orderByStartedDate) {
+                orderBy = "stop_playing.desc"
+                whereClause = "stop_playing_year=eq.${year}"
+            }
+
+            val endpoint = "$BASE_URL/$TABLE?select=start_playing,stop_playing,rating,platform,playing_time,game(id,name,cover_blob)&${whereClause}&order=${orderBy}"
+
+            val url = URL(endpoint)
 
             val httpURLConnection = url.openConnection() as HttpURLConnection
             httpURLConnection.requestMethod = "GET"
@@ -246,7 +321,7 @@ class UserGameIntegration : SupabaseIntegration() {
             }
         }
 
-        fun insertUserGames(userGames : List<UserGame>) {
+        /*fun insertUserGames(userGames : List<UserGame>) {
 
             val userGamesVO = mutableListOf<UserGameVO>()
 
@@ -279,7 +354,7 @@ class UserGameIntegration : SupabaseIntegration() {
             }
         }
 
-        fun updateUserGames(userGames : List<UserGame>) {
+        fun updatePlayingGames(userGames : List<UserGame>) {
 
             val userGamesVO = mutableListOf<UserGameVO>()
 
@@ -310,7 +385,7 @@ class UserGameIntegration : SupabaseIntegration() {
             if (responseCode != HttpURLConnection.HTTP_CREATED) {
                 throw Exception("Failed to create the user")
             }
-        }
+        }*/
 
         private fun convertVoToEntity(vo : UserGameSupabaseVO) : UserGame {
             val userGame = UserGame(null)
@@ -348,6 +423,20 @@ class UserGameIntegration : SupabaseIntegration() {
             userGameVO.start_playing = userGame.startPlayingOn
             userGameVO.stop_playing = userGame.stopPlayingOn
             userGameVO.status = userGame.status?.printableName
+
+            if (userGame.startPlayingOn != null) {
+                val localDate = userGame.startPlayingOn!!.toInstant()
+                    .atZone(ZoneId.of("UTC"))
+                    .toLocalDate()
+                userGameVO.start_playing_year = localDate.year
+            }
+
+            if (userGame.stopPlayingOn != null) {
+                val localDate = userGame.stopPlayingOn!!.toInstant()
+                    .atZone(ZoneId.of("UTC"))
+                    .toLocalDate()
+                userGameVO.stop_playing_year = localDate.year
+            }
 
             return userGameVO
         }

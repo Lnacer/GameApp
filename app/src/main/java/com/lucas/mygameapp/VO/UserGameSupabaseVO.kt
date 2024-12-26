@@ -1,5 +1,6 @@
 package com.lucas.mygameapp.VO
 
+import java.time.ZoneId
 import java.util.Date
 
 class UserGameSupabaseVO (var game_id : Int) {
@@ -13,4 +14,6 @@ class UserGameSupabaseVO (var game_id : Int) {
     var rating : Float? = null
     var created_date : Date? = null
     var game : GameSupabaseVO? = null
+    var stop_playing_year : Int? = null
+    var start_playing_year : Int? = null
 }

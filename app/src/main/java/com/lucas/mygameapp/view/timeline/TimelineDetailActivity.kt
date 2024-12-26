@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.lucas.mygameapp.Integration.Supabase.UserGameIntegration
 import com.lucas.mygameapp.R
 import com.lucas.mygameapp.database.Database
 import com.lucas.mygameapp.databinding.ActivityMainBinding
@@ -72,16 +73,8 @@ class TimelineDetailActivity : AppCompatActivity() {
 
     private fun updateGames(orderByStartedDate : Boolean) {
         thread {
-            val database = Database.getInstance(applicationContext)
 
-            val startDate = GregorianCalendar(year, 0, 1).time
-            val endDate = GregorianCalendar(year, 11, 31).time
-
-            val playedGames = if (orderByStartedDate) {
-                database.userGameDao().getAllPlayedBetweenDates(startDate, endDate)
-            } else {
-                database.userGameDao().getAllBeatenBetweenDates(startDate, endDate)
-            }
+            val playedGames = UserGameIntegration.getTimelineGames(year, orderByStartedDate)
 
             runOnUiThread {
                 val listGameAdapter = TimelineDetailsAdapter(playedGames, this)

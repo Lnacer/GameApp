@@ -2,25 +2,18 @@ package com.lucas.mygameapp.view.allgames
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.transition.Visibility
 import android.view.View
-import androidx.core.view.children
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.GridLayoutManager
 import com.lucas.mygameapp.Integration.Supabase.UserGameIntegration
 import com.lucas.mygameapp.view.adapter.ListGameAdapter
 import com.lucas.mygameapp.R
-import com.lucas.mygameapp.database.Database
 import com.lucas.mygameapp.databinding.ActivityAllGamesBinding
-import com.lucas.mygameapp.model.Game
 import com.lucas.mygameapp.model.GameStatus
-import com.lucas.mygameapp.model.Platform
 import com.lucas.mygameapp.model.UserGame
 import com.lucas.mygameapp.view.allgames.bottomsheet.SearchGamesBottomSheet
 import com.lucas.mygameapp.view.gamedetail.GameDetailActivityContract
-import com.lucas.mygameapp.view.searchgame.bottomsheet.SearchFilterBottomSheet
 import kotlin.concurrent.thread
-import kotlin.math.ceil
 
 class AllGamesActivity : AppCompatActivity() {
 
@@ -65,7 +58,17 @@ class AllGamesActivity : AppCompatActivity() {
 
         thread {
             sizeGames = UserGameIntegration.getCounts(status!!)[status?.printableName!!] ?: 0
-            userGames.addAll(UserGameIntegration.getUserGameByStatus(status!!, 0))
+
+            var order : String? = null
+            if (status == GameStatus.FINISHED) {
+                order = "stop_playing.desc.nullslast"
+            }
+
+            userGames.addAll(UserGameIntegration.getUserGameByStatus(
+                status!!,
+                0,
+                order
+            ))
             userGamesFiltered.addAll(userGames.toList())
 
             runOnUiThread {
@@ -96,7 +99,11 @@ class AllGamesActivity : AppCompatActivity() {
         }
 
         thread {
-            val games = UserGameIntegration.getUserGameByStatus(status!!, userGames.size)
+            var order : String? = null
+            if (status == GameStatus.FINISHED) {
+                order = "stop_playing.desc.nullslast"
+            }
+            val games = UserGameIntegration.getUserGameByStatus(status!!, userGames.size, order)
 
             userGamesFiltered.addAll(games.toList())
 

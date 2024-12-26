@@ -14,4 +14,6 @@ class UserGameVO(var game_id : Int) {
     var platform : String? = null
     var rating : Float? = null
     var created_date : Date? = null
+    var start_playing_year : Int? = null
+    var stop_playing_year : Int? = null
 }

@@ -19,6 +19,8 @@ import com.lucas.mygameapp.utils.MaskWatcher
 import com.lucas.mygameapp.view.gamedetail.GameDetailActivity
 import com.lucas.mygameapp.view.utils.DatePickerFragment
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.Date
 import kotlin.concurrent.thread
 import kotlin.reflect.KType
